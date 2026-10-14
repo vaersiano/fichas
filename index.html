@@ -263,7 +263,7 @@ textarea {
     <!-- Encabezado con logotipos institucionales -->
     <div class="header-institucional">
         <div class="logo-gva">
-            <img id="logoGvaImg" alt="Generalitat Valenciana">
+            <img src="gva.png" alt="Generalitat Valenciana">
         </div>
         
         <div class="titulo-principal">
@@ -273,10 +273,10 @@ textarea {
         
         <div class="logos-derecha">
             <div class="logo-vaersa">
-                <img id="logoVaersaImg" alt="VAERSA">
+                <img src="vaersa.png" alt="VAERSA">
             </div>
             <div class="logo-sigpac">
-                <img id="logoSigpacImg" alt="SIGPAC">
+                <img src="sigpac.jpg" alt="SIGPAC">
             </div>
         </div>
     </div>
@@ -375,12 +375,6 @@ textarea {
 </div>
 
 <script>
-// Carga de imágenes institucionales mediante rutas relativas del repositorio de GitHub
-// (Modifica los nombres de archivo según los nombres exactos que hayas subido)
-document.getElementById("logoGvaImg").src = "gva.png";
-document.getElementById("logoVaersaImg").src = "vaersa.png";
-document.getElementById("logoSigpacImg").src = "sigpac.jpg";
-
 // Inicializar fecha automáticamente con el formato DD/MM/AAAA
 const hoy = new Date();
 const dia = String(hoy.getDate()).padStart(2, '0');
