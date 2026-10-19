@@ -6,40 +6,52 @@
 
 <title>Ficha SIGPAC - GVA / VAERSA</title>
 
+<!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<!-- Leaflet Draw CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
 
+<!-- Librerías JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<!-- Proj4 para transformar coordenadas ETRS89 UTM Huso 30 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
 body{
     font-family: Arial, sans-serif;
-    margin: 20px;
+    margin: 0;
+    padding: 15px;
     background: #efefef;
 }
 
 .panel{
     background: white;
-    padding: 15px;
+    padding: 12px 15px;
     border-radius: 10px;
     margin-bottom: 15px;
     max-width: 1123px;
     margin-left: auto;
     margin-right: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
 }
 
-/* Contenedor estricto fijo de 1123px x 794px (A4 Apaisado) */
+/* Contenedor estricto fijo de 1123px x 794px (A4 Apaisado) sin borde exterior que cause líneas en PDF */
 #ficha{
     width: 1123px;
     height: 794px;
     background: white;
-    border: 1px solid #000;
-    padding: 10px 18px;
+    padding: 12px 20px;
     box-sizing: border-box;
     margin: 0 auto;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 0 10px rgba(0,0,0,0.15);
 }
 
 /* Encabezado con logotipos institucionales oficiales */
@@ -48,7 +60,7 @@ body{
     justify-content: space-between;
     align-items: center;
     border-bottom: 2px solid #333;
-    padding-bottom: 2px;
+    padding-bottom: 4px;
 }
 
 .logo-gva img {
@@ -90,9 +102,9 @@ h2{
 
 .etiqueta-seccion {
     font-weight: bold;
-    font-size: 9px;
+    font-size: 10px;
     color: #333;
-    margin: 1px 0;
+    margin: 3px 0 2px 0;
     text-transform: uppercase;
     border-bottom: 1px solid #666;
     padding-bottom: 1px;
@@ -103,20 +115,28 @@ table.tabla-sigpac{
     border-collapse: collapse;
 }
 
+/* Texto de datos SIGPAC ampliado */
 table.tabla-sigpac td{
     border: 1px solid #000;
-    padding: 2px 4px;
-    font-size: 9.5px;
+    padding: 3px 5px;
+    font-size: 11px;
     text-align: center;
 }
 
-/* Mapa maximizado en altura y separado 1cm arriba */
+table.tabla-sigpac td span {
+    font-size: 11.5px;
+    font-weight: bold;
+    color: #000;
+}
+
+/* Mapa blindado en tamaño estricto centrado */
 #mapPreview,
 #capturaMapa{
-    width: 100%;
-    height: 440px; 
+    width: 100% !important;
+    height: 395px !important; 
+    max-height: 395px !important;
     border: 2px solid black;
-    margin-top: 38px;
+    margin-top: 6px;
     box-sizing: border-box;
 }
 
@@ -125,21 +145,32 @@ table.tabla-sigpac td{
     object-fit: contain;
 }
 
-/* Módulo Unificado de Control de Campo en la parte inferior */
+/* Estilo personalizado para las etiquetas de texto flotantes */
+.leaflet-tooltip.etiqueta-texto-mapa {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #333;
+    color: #b22222;
+    font-weight: bold;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* Módulo Unificado de Control de Campo perfectamente proporcionado */
 .seccion-inferior {
     display: flex;
     flex-direction: column;
     position: absolute;
     bottom: 10px;
-    left: 18px;
-    right: 18px;
+    left: 20px;
+    right: 20px;
     border: 1px solid #000;
-    padding: 5px 8px;
+    padding: 6px 10px;
     background: #fafafa;
-    gap: 4px;
+    gap: 5px;
 }
 
-/* Título de control de campo horizontal a todo el ancho */
 .titulo-control-campo {
     font-weight: bold;
     font-size: 11px;
@@ -150,7 +181,6 @@ table.tabla-sigpac td{
     padding-bottom: 2px;
 }
 
-/* Contenido inferior en 3 columnas bien distribuidas */
 .cuerpo-control-inferior {
     display: flex;
     gap: 10px;
@@ -160,21 +190,21 @@ table.tabla-sigpac td{
     flex: 1.1;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
 }
 
 .columna-control-2 {
     flex: 1.1;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
 }
 
 .columna-control-3 {
     flex: 1.1;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
 }
 
 .control-header {
@@ -190,7 +220,7 @@ table.tabla-sigpac td{
 
 .control-header input {
     width: 100%;
-    padding: 1px 3px;
+    padding: 2px 3px;
     font-size: 9px;
     box-sizing: border-box;
     border: 1px solid #777;
@@ -198,6 +228,7 @@ table.tabla-sigpac td{
     text-align: center;
 }
 
+/* Tabla de campo con casillas perfectamente alineadas */
 .tabla-campo {
     width: 100%;
     border-collapse: collapse;
@@ -205,33 +236,42 @@ table.tabla-sigpac td{
 
 .tabla-campo td {
     border: 1px solid #bbb;
-    padding: 1px 3px;
+    padding: 2px 4px;
     font-size: 8.5px;
     text-align: left;
     background: #fff;
+    vertical-align: middle;
+}
+
+.tabla-campo td span.label-cell {
+    display: inline-block;
+    width: 55px;
+    font-weight: bold;
 }
 
 .tabla-campo input[type="text"] {
-    width: 32px;
-    padding: 1px;
+    width: 35px;
+    padding: 2px;
     font-size: 8.5px;
     text-align: center;
     border: 1px solid #777;
+    float: right;
 }
 
 .tabla-campo input[type="checkbox"] {
-    transform: scale(0.8);
+    transform: scale(0.9);
     cursor: pointer;
+    float: right;
 }
 
 textarea {
     width: 100%;
-    height: 28px;
+    height: 36px;
     box-sizing: border-box;
     resize: none;
     font-family: Arial, sans-serif;
-    padding: 2px 4px;
-    font-size: 8.5px;
+    padding: 3px 5px;
+    font-size: 9px;
     border: 1px solid #000;
     background: #fff;
 }
@@ -239,7 +279,7 @@ textarea {
 /* Caja de firma digital ampliada */
 .firma-box {
     border: 1px dashed #777;
-    height: 48px;
+    height: 78px;
     background: #fff;
     display: flex;
     align-items: center;
@@ -247,6 +287,48 @@ textarea {
     font-size: 9px;
     color: #555;
     text-align: center;
+    padding: 4px;
+}
+
+/* Controles de estilo integrados en el lado izquierdo del mapa (topleft) */
+.controles-estilo-mapa {
+    background: white;
+    border: 2px solid rgba(0,0,0,0.2);
+    border-radius: 4px;
+    padding: 4px 6px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: bold;
+    color: #333;
+}
+
+.controles-estilo-mapa .item-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.controles-estilo-mapa input[type="color"] {
+    width: 28px;
+    height: 20px;
+    border: 1px solid #ccc;
+    padding: 0;
+    cursor: pointer;
+    background: transparent;
+    border-radius: 3px;
+}
+
+.controles-estilo-mapa select {
+    font-size: 10px;
+    padding: 1px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    background: #fff;
+    cursor: pointer;
 }
 </style>
 </head>
@@ -254,13 +336,15 @@ textarea {
 <body>
 
 <div class="panel">
-    <input id="referencia" type="text" placeholder="ej. 46-222-0-0-1-1-1" style="padding: 5px; width: 200px;">
-    <button onclick="buscarSIGPAC()" style="padding: 6px 12px;">Buscar</button>
-    <button onclick="generarPDF()" style="padding: 6px 12px; background: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px;">Generar PDF</button>
+    <input id="referencia" type="text" placeholder="ej. 46-222-0-0-1-1-1" style="padding: 5px; width: 170px;">
+    <button onclick="buscarSIGPAC()" style="padding: 6px 10px;">Buscar</button>
+    <label style="padding: 6px 10px; background: #6c757d; color: white; cursor: pointer; border-radius: 4px; font-size: 13px;">
+        Cargar XML <input type="file" id="cargarXMLInput" accept=".xml" style="display: none;" onchange="cargarXML(event)">
+    </label>
+    <button onclick="generarPDF()" style="padding: 6px 10px; background: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px; margin-left: auto;">Generar PDF</button>
 </div>
 
 <div id="ficha">
-    <!-- Encabezado con logotipos institucionales -->
     <div class="header-institucional">
         <div class="logo-gva">
             <img src="gva.png" alt="Generalitat Valenciana">
@@ -309,12 +393,9 @@ textarea {
 
     <!-- MÓDULO UNIFICADO DE CONTROL DE CAMPO -->
     <div class="seccion-inferior">
-        
-        <!-- Título principal horizontal a todo el ancho -->
         <div class="titulo-control-campo">Control de Campo</div>
 
         <div class="cuerpo-control-inferior">
-            <!-- Columna 1: Fechas, Controlador y Cultivos -->
             <div class="columna-control-1">
                 <div class="control-header">
                     <div>
@@ -329,28 +410,31 @@ textarea {
 
                 <table class="tabla-campo">
                     <tr>
-                        <td><b>Uso obs:</b> <input type="text"></td>
-                        <td><b>Regadío:</b> <input type="text"></td>
+                        <td><span class="label-cell">Uso obs:</span> <input type="text"></td>
+                        <td><span class="label-cell">Regadío:</span> <input type="text"></td>
                     </tr>
                     <tr>
-                        <td><b>Abandono:</b> <input type="checkbox"></td>
-                        <td><b>Croquis:</b> <input type="checkbox"></td>
+                        <td><span class="label-cell">Abandono:</span> <input type="checkbox"></td>
+                        <td><span class="label-cell">Croquis:</span> <input type="checkbox"></td>
                     </tr>
                     <tr>
                         <td colspan="2" style="background:#eaeaea; font-weight:bold; text-align:center; font-size:8px;">Conteo de Cultivos</td>
                     </tr>
                     <tr>
-                        <td><b>Almendro:</b> <input type="text" placeholder="0"></td>
-                        <td><b>Avellano:</b> <input type="text" placeholder="0"></td>
+                        <td><span class="label-cell">Almendro:</span> <input type="text" placeholder="0"></td>
+                        <td><span class="label-cell">Avellano:</span> <input type="text" placeholder="0"></td>
                     </tr>
                     <tr>
-                        <td><b>Algarrobo:</b> <input type="text" placeholder="0"></td>
-                        <td><b>Nogal:</b> <input type="text" placeholder="0"></td>
+                        <td><span class="label-cell">Algarrobo:</span> <input type="text" placeholder="0"></td>
+                        <td><span class="label-cell">Nogal:</span> <input type="text" placeholder="0"></td>
+                    </tr>
+                    <tr>
+                        <td><span class="label-cell">Pistacho:</span> <input type="text" placeholder="0"></td>
+                        <td><span class="label-cell">Otros:</span> <input type="text" placeholder="0"></td>
                     </tr>
                 </table>
             </div>
 
-            <!-- Columna 2: Observaciones e Incidencias -->
             <div class="columna-control-2">
                 <div>
                     <div class="etiqueta-seccion">Observaciones:</div>
@@ -362,26 +446,28 @@ textarea {
                 </div>
             </div>
 
-            <!-- Columna 3: Firma Digital Ampliada -->
             <div class="columna-control-3">
                 <div class="etiqueta-seccion">Firma Digital:</div>
-                <div class="firma-box">
-                    Vº Bº / Firma digital del controlador sobre el terreno
+                <div class="firma-box" id="firmaBox">
+                    Vº Bº / Firma digital del inspector sobre el terreno
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 
 <script>
-// Inicializar fecha automáticamente con el formato DD/MM/AAAA
+// Registrar proyección ETRS89 UTM Huso 30 (EPSG:25830)
+proj4.defs("EPSG:25830","+proj=utm +zone=30 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
+
+// Inicializar fecha
 const hoy = new Date();
 const dia = String(hoy.getDate()).padStart(2, '0');
 const mes = String(hoy.getMonth() + 1).padStart(2, '0');
 const anio = hoy.getFullYear();
 document.getElementById("fechaControl").value = `${dia}/${mes}/${anio}`;
 
+// Inicializar Mapa
 const map = L.map('mapPreview', {
     zoomControl: false,
     preferCanvas: true 
@@ -397,22 +483,145 @@ L.tileLayer(
 
 map.setView([39.5, -0.4], 16);
 
+// Capas para dibujo y elementos SIGPAC
+let drawnItems = new L.FeatureGroup();
+map.addLayer(drawnItems);
+
+// 1. Herramientas de Dibujo (Crear elementos)
+let drawControl = new L.Control.Draw({
+    position: 'topleft',
+    draw: {
+        polygon: true,
+        polyline: true,
+        rectangle: true,
+        circle: false,
+        marker: true,
+        circlemarker: false
+    },
+    edit: false
+});
+map.addControl(drawControl);
+
+// 2. Panel de Estilo (Color y Transparencia) colocado exactamente entre crear y editar
+L.EstiloControl = L.Control.extend({
+    options: {
+        position: 'topleft'
+    },
+    onAdd: function (map) {
+        let container = L.DomUtil.create('div', 'controles-estilo-mapa');
+        container.innerHTML = `
+            <div class="item-control">
+                <span>Color:</span>
+                <input type="color" id="colorElemento" value="#ff7800" title="Color de elementos">
+            </div>
+            <div class="item-control">
+                <span>Transp:</span>
+                <select id="opacidadElemento" title="Transparencia de relleno">
+                    <option value="0.0">0%</option>
+                    <option value="0.15" selected>15%</option>
+                    <option value="0.3">30%</option>
+                    <option value="0.5">50%</option>
+                    <option value="0.7">70%</option>
+                    <option value="1.0">100%</option>
+                </select>
+            </div>
+        `;
+        L.DomEvent.disableClickPropagation(container);
+        return container;
+    }
+});
+map.addControl(new L.EstiloControl());
+
+// 3. Herramientas de Edición y Borrado
+let editControl = new L.Control.Draw({
+    position: 'topleft',
+    draw: false,
+    edit: {
+        featureGroup: drawnItems
+    }
+});
+map.addControl(editControl);
+
+// Variable para almacenar la capa que se quiere modificar mediante el menú
+let capaSeleccionadaEdicion = null;
+
+function configurarEventosCapa(layer) {
+    layer.on('click', function(e) {
+        capaSeleccionadaEdicion = layer;
+        layer.bindPopup(`
+            <div style="text-align:center; font-family:Arial; font-size:11px; padding:2px;">
+                <b>Modificar Estilo de Elemento</b><br>
+                <p style="margin:5px 0 8px 0; font-size:10px; color:#555;">Aplicar color y transparencia actuales:</p>
+                <button onclick="aplicarEstiloACapaSeleccionada()" style="background:#28a745; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-weight:bold;">Aplicar Cambios</button>
+            </div>
+        `).openPopup(e.latlng);
+    });
+}
+
+window.aplicarEstiloACapaSeleccionada = function() {
+    if (capaSeleccionadaEdicion) {
+        aplicarEstiloLayer(capaSeleccionadaEdicion);
+        capaSeleccionadaEdicion.closePopup();
+    }
+};
+
+// Evento al crear una nueva geometría
+map.on(L.Draw.Event.CREATED, function (e) {
+    let layer = e.layer;
+    aplicarEstiloLayer(layer);
+    configurarEventosCapa(layer);
+    drawnItems.addLayer(layer);
+
+    setTimeout(() => {
+        let textoEtiqueta = prompt("Introduce un texto o etiqueta para esta figura (opcional):", "");
+        if (textoEtiqueta && textoEtiqueta.trim() !== "") {
+            layer.bindTooltip(textoEtiqueta.trim(), {
+                permanent: true,
+                direction: 'center',
+                className: 'etiqueta-texto-mapa'
+            });
+        }
+    }, 150);
+});
+
+// Evento al editar geometrías existentes con la barra de herramientas de Leaflet
+map.on(L.Draw.Event.EDITED, function (e) {
+    e.layers.eachLayer(function (layer) {
+        aplicarEstiloLayer(layer);
+    });
+});
+
+// Función auxiliar para aplicar el color y opacidad actuales a cualquier capa
+function aplicarEstiloLayer(layer) {
+    let colorSeleccionado = document.getElementById("colorElemento").value;
+    let opacidadSeleccionada = parseFloat(document.getElementById("opacidadElemento").value);
+
+    if (layer instanceof L.Path) {
+        layer.setStyle({
+            color: colorSeleccionado,
+            fillColor: colorSeleccionado,
+            fillOpacity: opacidadSeleccionada,
+            weight: 3
+        });
+    } else if (layer instanceof L.Marker) {
+        let customIcon = L.divIcon({
+            className: 'custom-marker',
+            html: `<div style="background-color: ${colorSeleccionado}; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 3px rgba(0,0,0,0.5);"></div>`,
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+        });
+        layer.setIcon(customIcon);
+    }
+}
+
 let recintoLayer = null;
 
 async function buscarSIGPAC(){
     const referencia = document.getElementById("referencia").value.trim();
-
-    if(!referencia){
-        alert("Introduce una referencia");
-        return;
-    }
+    if(!referencia){ alert("Introduce una referencia"); return; }
 
     const p = referencia.split("-");
-
-    if(p.length !== 7){
-        alert("Formato válido:\n46-222-0-0-1-1-1");
-        return;
-    }
+    if(p.length !== 7){ alert("Formato válido:\n46-222-0-0-1-1-1"); return; }
 
     document.getElementById("provincia").textContent = p[0];
     document.getElementById("municipio").textContent = p[1];
@@ -428,9 +637,7 @@ async function buscarSIGPAC(){
         const response = await fetch(url);
         const geojson = await response.json();
 
-        if(recintoLayer){
-            map.removeLayer(recintoLayer);
-        }
+        if(recintoLayer){ map.removeLayer(recintoLayer); }
 
         recintoLayer = L.geoJSON(geojson, {
             color: "red",
@@ -439,12 +646,10 @@ async function buscarSIGPAC(){
             fillOpacity: 0.15
         }).addTo(map);
 
-        map.fitBounds(recintoLayer.getBounds(), {
-            padding: [20, 20]
-        });
+        map.invalidateSize();
+        map.fitBounds(recintoLayer.getBounds(), { padding: [20, 20] });
 
         const props = geojson.features?.[0]?.properties || {};
-        
         document.getElementById("uso").textContent = props.uso_sigpac || props.uso || "";
         document.getElementById("superficie").textContent = props.superficie !== undefined ? props.superficie : "";
         document.getElementById("coefreg").textContent = props.coef_regadio !== undefined ? props.coef_regadio : (props.coefreg || "0");
@@ -455,14 +660,106 @@ async function buscarSIGPAC(){
     }
 }
 
+// Función para leer y cargar XML aplicando el estilo actual
+function cargarXML(event) {
+    let file = event.target.files[0];
+    if (!file) return;
+
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            let parser = new DOMParser();
+            let xmlDoc = parser.parseFromString(e.target.result, "text/xml");
+            
+            let lineas = xmlDoc.getElementsByTagName("LINEA_DECLARACION");
+            if (lineas.length === 0) {
+                alert("El archivo XML no contiene líneas de declaración válidas.");
+                return;
+            }
+
+            drawnItems.clearLayers();
+
+            let colorSeleccionado = document.getElementById("colorElemento").value;
+            let opacidadSeleccionada = parseFloat(document.getElementById("opacidadElemento").value);
+
+            for (let i = 0; i < lineas.length; i++) {
+                let wktNode = lineas[i].getElementsByTagName("WKT")[0];
+                let parcelaAgricolaNode = lineas[i].getElementsByTagName("PARCELA_AGRICOLA")[0];
+                let etiquetaTexto = parcelaAgricolaNode ? parcelaAgricolaNode.textContent : "";
+
+                if (!wktNode) continue;
+                let wktText = wktNode.textContent;
+
+                let matches = wktText.match(/\(\(([^)]+)\)\)/);
+                if (!matches) continue;
+
+                let puntosStr = matches[1].split(",");
+                let latLngs = [];
+
+                for (let j = 0; j < puntosStr.length; j++) {
+                    let parts = puntosStr[j].trim().split(/\s+/);
+                    if (parts.length >= 2) {
+                        let x = parseFloat(parts[0]);
+                        let y = parseFloat(parts[1]);
+                        
+                        let lonLat = proj4("EPSG:25830", "EPSG:4326", [x, y]);
+                        latLngs.push([lonLat[1], lonLat[0]]);
+                    }
+                }
+
+                if (latLngs.length > 0) {
+                    let polygon = L.polygon(latLngs, { 
+                        color: colorSeleccionado, 
+                        weight: 3, 
+                        fillColor: colorSeleccionado, 
+                        fillOpacity: opacidadSeleccionada 
+                    });
+                    
+                    if (etiquetaTexto && etiquetaTexto.trim() !== "") {
+                        polygon.bindTooltip(etiquetaTexto.trim(), {
+                            permanent: true,
+                            direction: 'center',
+                            className: 'etiqueta-texto-mapa'
+                        });
+                    }
+
+                    configurarEventosCapa(polygon);
+                    drawnItems.addLayer(polygon);
+                }
+            }
+
+            if (drawnItems.getLayers().length > 0) {
+                map.invalidateSize();
+                map.fitBounds(drawnItems.getBounds(), { padding: [20, 20] });
+            }
+            alert("XML cargado y convertido correctamente (ETRS89 Huso 30).");
+        } catch (err) {
+            console.error(err);
+            alert("Error al procesar el archivo XML.");
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = "";
+}
+
 async function generarPDF(){
     const referencia = document.getElementById("referencia").value.trim() || "Ficha_SIGPAC";
+    
+    const firmaBox = document.getElementById("firmaBox");
+    const textoFirmaOriginal = firmaBox.innerHTML;
+    firmaBox.innerHTML = "";
+
+    // Ocultar barras de herramientas del mapa para el PDF
+    const toolbars = document.querySelectorAll('.leaflet-draw, .controles-estilo-mapa');
+    toolbars.forEach(tb => tb.style.display = 'none');
 
     await new Promise(r => setTimeout(r, 800));
 
     try {
         const mapaDiv = document.getElementById("mapPreview");
         const captura = document.getElementById("capturaMapa");
+
+        map.invalidateSize();
 
         const canvas = await html2canvas(mapaDiv, {
             useCORS: true,
@@ -473,27 +770,16 @@ async function generarPDF(){
         });
 
         captura.src = canvas.toDataURL("image/png");
-        
         mapaDiv.style.display = "none";
         captura.style.display = "block";
 
         const elementoFicha = document.getElementById("ficha");
-
         const opcionesPDF = {
             filename: referencia + ".pdf",
             margin: 0,
             image: { type: 'jpeg', quality: 1.0 },
-            html2canvas: {
-                scale: 2,
-                useCORS: true,
-                letterRendering: true,
-                scrollY: 0
-            },
-            jsPDF: {
-                unit: 'px',
-                format: [1123, 794],
-                orientation: 'landscape'
-            }
+            html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 },
+            jsPDF: { unit: 'px', format: [1123, 794], orientation: 'landscape', putOnlyUsedFonts: true }
         };
 
         await html2pdf().set(opcionesPDF).from(elementoFicha).save();
@@ -502,6 +788,10 @@ async function generarPDF(){
         console.error("Error al generar el PDF:", error);
         alert("Hubo un error al generar el PDF.");
     } finally {
+        firmaBox.innerHTML = textoFirmaOriginal;
+
+        toolbars.forEach(tb => tb.style.display = '');
+        
         document.getElementById("capturaMapa").style.display = "none";
         document.getElementById("mapPreview").style.display = "block";
         map.invalidateSize();
