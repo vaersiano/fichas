@@ -476,7 +476,7 @@ textarea {
                             <input type="text" id="inputUsoObs" style="width: calc(100% - 95px);">
                             
                             <!-- Desplegable de Usos con Búsqueda REGEX -->
-                            <div id="modalUsos" class="modal-desplegable">
+                            <div id="modalUsos" class="modal-desplegable" style="width: 220px;">
                                 <input type="text" id="busquedaRegexUsos" placeholder="Buscar con Regex..." oninput="filtrarLista('usos')">
                                 <div id="listaUsos" class="lista-box"></div>
                             </div>
@@ -527,7 +527,7 @@ textarea {
                     <textarea id="txtIncidencias" placeholder="Incidencias detectadas..."></textarea>
                     
                     <!-- Desplegable de Incidencias con Búsqueda REGEX -->
-                    <div id="modalIncidencias" class="modal-desplegable">
+                    <div id="modalIncidencias" class="modal-desplegable" style="width: 280px;">
                         <input type="text" id="busquedaRegexInc" placeholder="Buscar con Regex..." oninput="filtrarLista('incidencias')">
                         <div id="listaIncidencias" class="lista-box"></div>
                     </div>
@@ -765,12 +765,16 @@ function toggleModal(idModal, event) {
         modal.style.display = "flex";
         poblarLista(tipo);
         let inputBusqueda = modal.querySelector('input[type="text"]');
-        if (inputBusqueda) inputBusqueda.focus();
+        if (inputBusqueda) {
+            inputBusqueda.value = "";
+            inputBusqueda.focus();
+        }
     }
 }
 
 function filtrarLista(tipo) {
-    let textoFiltro = document.getElementById("busquedaRegexUsos").value;
+    let idInput = tipo === 'usos' ? 'busquedaRegexUsos' : 'busquedaRegexInc';
+    let textoFiltro = document.getElementById(idInput).value;
     poblarLista(tipo, textoFiltro);
 }
 
@@ -785,7 +789,7 @@ function seleccionarItem(tipo, textoSeleccionado) {
         }
         document.getElementById("modalUsos").style.display = "none";
     } else if (tipo === 'regadio') {
-        let input = document.querySelector('.tabla-campo tr:nth-child(1) td:nth-child(2) input[type="text"]');
+        let input = document.getElementById("inputRegadio");
         input.value = textoSeleccionado;
         document.getElementById("modalRegadio").style.display = "none";
     } else {
