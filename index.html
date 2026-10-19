@@ -108,6 +108,9 @@ h2{
     text-transform: uppercase;
     border-bottom: 1px solid #666;
     padding-bottom: 1px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 table.tabla-sigpac{
@@ -241,6 +244,7 @@ table.tabla-sigpac td span {
     text-align: left;
     background: #fff;
     vertical-align: middle;
+    position: relative;
 }
 
 .tabla-campo td span.label-cell {
@@ -264,10 +268,10 @@ table.tabla-sigpac td span {
     float: right;
 }
 
-/* Áreas de texto ampliadas para evitar reboses y solapamientos */
+/* Áreas de texto con altura ajustada a 60px */
 textarea {
     width: 100%;
-    height: 50px;
+    height: 60px;
     box-sizing: border-box;
     resize: none;
     font-family: Arial, sans-serif;
@@ -331,6 +335,61 @@ textarea {
     background: #fff;
     cursor: pointer;
 }
+
+/* Estilos para los botones desplegables de selección rápida */
+.btn-desplegable {
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 1px 4px;
+    font-size: 7.5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+.btn-desplegable:hover { background: #0056b3; }
+
+.modal-desplegable {
+    display: none;
+    position: absolute;
+    bottom: 25px;
+    left: 0;
+    width: 200px;
+    max-height: 150px;
+    background: white;
+    border: 1px solid #333;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    z-index: 1000;
+    border-radius: 4px;
+    flex-direction: column;
+    padding: 6px;
+}
+.modal-desplegable input[type="text"] {
+    width: 100%;
+    padding: 4px;
+    font-size: 9px;
+    box-sizing: border-box;
+    margin-bottom: 4px;
+    border: 1px solid #ccc;
+    float: none !important;
+    text-align: left !important;
+}
+.lista-box {
+    overflow-y: auto;
+    max-height: 120px;
+    border: 1px solid #eee;
+    background: #fff;
+}
+.item-lista {
+    padding: 5px 6px;
+    font-size: 8.5px;
+    border-bottom: 1px solid #f1f1f1;
+    cursor: pointer;
+    text-align: left;
+}
+.item-lista:hover {
+    background: #e9ecef;
+}
 </style>
 </head>
 
@@ -348,7 +407,7 @@ textarea {
 <div id="ficha">
     <div class="header-institucional">
         <div class="logo-gva">
-            <img src="gva.png" alt="Generalitat Valenciana">
+            <img src="file:///C:/Users/villena.vic/Downloads/sigpac_fichas/images/gva.png" alt="Generalitat Valenciana">
         </div>
         
         <div class="titulo-principal">
@@ -358,10 +417,10 @@ textarea {
         
         <div class="logos-derecha">
             <div class="logo-vaersa">
-                <img src="vaersa.png" alt="VAERSA">
+                <img src="file:///C:/Users/villena.vic/Downloads/sigpac_fichas/images/vaersa.png" alt="VAERSA">
             </div>
             <div class="logo-sigpac">
-                <img src="sigpac.jpg" alt="SIGPAC">
+                <img src="file:///C:/Users/villena.vic/Downloads/sigpac_fichas/images/sigpac.jpg" alt="SIGPAC">
             </div>
         </div>
     </div>
@@ -411,8 +470,27 @@ textarea {
 
                 <table class="tabla-campo">
                     <tr>
-                        <td><span class="label-cell">Uso obs:</span> <input type="text" id="inputUsoObs" style="width: calc(100% - 60px);"></td>
-                        <td><span class="label-cell">Regadío:</span> <input type="text"></td>
+                        <td style="position: relative;">
+                            <span class="label-cell">Uso obs:</span> 
+                            <button type="button" class="btn-desplegable" onclick="toggleModal('modalUsos', event)" style="margin-left: 2px;">+ Usos</button>
+                            <input type="text" id="inputUsoObs" style="width: calc(100% - 95px);">
+                            
+                            <!-- Desplegable de Usos con Búsqueda REGEX -->
+                            <div id="modalUsos" class="modal-desplegable">
+                                <input type="text" id="busquedaRegexUsos" placeholder="Buscar con Regex..." oninput="filtrarLista('usos')">
+                                <div id="listaUsos" class="lista-box"></div>
+                            </div>
+                        </td>
+                        <td style="position: relative;">
+                            <span class="label-cell">Regadío:</span> 
+                            <button type="button" class="btn-desplegable" onclick="toggleModal('modalRegadio', event)" style="margin-left: 2px;">+ Reg</button>
+                            <input type="text" id="inputRegadio" style="width: calc(100% - 85px);">
+                            
+                            <!-- Desplegable de Regadío (sin búsqueda REGEX) -->
+                            <div id="modalRegadio" class="modal-desplegable" style="width: 150px;">
+                                <div id="listaRegadio" class="lista-box" style="max-height: 100px;"></div>
+                            </div>
+                        </td>
                     </tr>
                     <tr>
                         <td><span class="label-cell">Abandono:</span> <input type="checkbox"></td>
@@ -441,9 +519,18 @@ textarea {
                     <div class="etiqueta-seccion">Observaciones:</div>
                     <textarea id="txtObservaciones" placeholder="Notas de campo..."></textarea>
                 </div>
-                <div>
-                    <div class="etiqueta-seccion">Incidencias:</div>
-                    <textarea placeholder="Incidencias detectadas..."></textarea>
+                <div style="position: relative;">
+                    <div class="etiqueta-seccion">
+                        Incidencias:
+                        <button type="button" class="btn-desplegable" onclick="toggleModal('modalIncidencias', event)">+ Incidencias</button>
+                    </div>
+                    <textarea id="txtIncidencias" placeholder="Incidencias detectadas..."></textarea>
+                    
+                    <!-- Desplegable de Incidencias con Búsqueda REGEX -->
+                    <div id="modalIncidencias" class="modal-desplegable">
+                        <input type="text" id="busquedaRegexInc" placeholder="Buscar con Regex..." oninput="filtrarLista('incidencias')">
+                        <div id="listaIncidencias" class="lista-box"></div>
+                    </div>
                 </div>
             </div>
 
@@ -458,6 +545,272 @@ textarea {
 </div>
 
 <script>
+// Listas Maestras
+const listaMaestraUsos = [
+    "TA - Tierras Arables",
+    "TH - Huerta",
+    "CS - Cítricos",
+    "FY - Frutales",
+    "OV - Olivar",
+    "VI - Viñedo",
+    "FS - Frutos Secos",
+    "FL - Frutos Secos y Olivar",
+    "CI - Cítricos e Invernaderos",
+    "IV - Invernaderos y cultivos bajo cubierta",
+    "FO - Forestal",
+    "PA - Pastizal",
+    "PR - Pastizal con Arbolado",
+    "PS - Pastizal con Matorral",
+    "AG - Aguas Continentales",
+    "ED - Edificaciones",
+    "ZU - Zona Urbana",
+    "IM - Improductivo",
+    "CA - Caminos",
+    "ZC - Zona de Concentración Parcelaria"
+];
+
+const listaMaestraRegadio = [
+    "0 - Secano",
+    "100 - Regadío"
+];
+
+const listaMaestraIncidencias = [
+    "7 - Uso asignado por la información de Catastro",
+    "11 - Árboles dispersos",
+    "12 - Contiene otros usos sin subdividir",
+    "13 - Se observa en la ortofoto uso de cultivo",
+    "14 - Superficie de cultivo que se prolonga en red viaria o fluvial",
+    "15 - Recinto perteneciente a parcela incluida en información gráfica de un Certificado de Forestación",
+    "17 - Recinto perteneciente a parcela incluida en información alfanumérica del Registro Vitícola identificada como arranque de viña",
+    "19 - Cítricos según SIG Citrícola",
+    "20 - Viña según SIG Vitícola",
+    "21 - Catastrado de arroz",
+    "37 - Recinto perteneciente a parcela incluida en información alfanumérica de un Certificado de Forestación",
+    "39 - La superficie de cítricos no ocupa la totalidad del recinto por asociación con otros frutales",
+    "46 - Recinto de uso no arable perteneciente a parcela incluido en fichero de parcelas declaradas",
+    "47 - Se observa en la ortofoto superficie arada",
+    "49 - Arboles aislados o a marco en cultivo combinado con el uso arable",
+    "58 - Viña según Registro Vitícola en parte del Recinto SIGPAC",
+    "62 - Uso pastos en parcela incluida en base de datos de pasto permanente",
+    "63 - Uso diferente a pastos en parcela incluida en base de datos de pasto permanente",
+    "74 - Información de uso SIGPAC aportada por la Comunidad Autónoma",
+    "75 - Información del sistema de explotación aportada por la Comunidad Autónoma",
+    "80 - Dato con origen en información procedente de la Comunidad Autónoma",
+    "81 - Instalaciones energéticas",
+    "83 - Tomate en invernadero",
+    "96 - Uso SIGPAC validado por fotointerpretación Control Teledetección 2017",
+    "97 - Uso SIGPAC estudiado por Control Teledetección 2017",
+    "98 - Uso SIGPAC validado por fotointerpretación Control Teledetección 2018",
+    "99 - Uso SIGPAC estudiado por Control Teledetección 2018",
+    "100 - Uso SIGPAC validado por fotointerpretación Control Teledetección 2019",
+    "111 - Asociación viña-hortalizas",
+    "112 - Plataneras",
+    "116 - Contiene elementos del paisaje",
+    "117 - No subvencionable: Cultivo abandonado",
+    "119 - Catastrado de urbano",
+    "120 - Zona esteparia medida",
+    "124 - Superficies forestales de rotación corta.",
+    "127 - Regadío comprobado. No consta existencia de concesión.",
+    "128 - Recintos sin cultivar con valores ambientales o por medidas agroambientales",
+    "129 - Plantación trufera o encinas micorrizadas",
+    "130 - Plantaciones forestales regulares",
+    "132 - Roquedo según cobertura SIOSE",
+    "133 - Todo el recinto es un elemento del paisaje sin definir",
+    "134 - Elemento del paisaje árboles en hilera",
+    "135 - Elemento del paisaje árboles en grupo hasta 0,3 ha",
+    "136 - Elemento del paisaje linde hasta 10 m de anchura",
+    "137 - Elemento del paisaje charcas, lagunas, pequeños humedales, etc. hasta 0,1ha",
+    "138 - Elemento del paisaje islas de vegetación natural o roca hasta 0,1ha",
+    "139 - Elemento del paisaje terraza hasta 10 m de anchura",
+    "140 - Información del coeficiente de subvencionabilidad aportada por la Comunidad Autónoma",
+    "142 - Cultivo de esparrago",
+    "143 - Monte-bajo matorral",
+    "144 - Erial",
+    "145 - Plantas aromáticas leñosas",
+    "146 - Asignación CAP manual recintos pequeños",
+    "148 - Recinto perteneciente a un Tancat",
+    "149 - Recinto de pasto sensible transformado",
+    "150 - recinto con mezcla de platanera y otros frutales tropicales",
+    "151 - Frutales bajo plástico",
+    "152 - Improductivo según cobertura MFE",
+    "153 - Actualización CAP manual con coeficiente 2016",
+    "154 - Visto en campo 2017",
+    "155 - Frutos secos que no cumplen la densidad mínima, según control de campo o administrativo",
+    "156 - Control de pastos de más de 10 años",
+    "157 - El cambio de uso SIGPAC, procedente de un uso forestal o pastos, no acredita autorización administrativa de la Consejería con competencia en medio ambiente",
+    "158 - Barbecho de 5 años consecutivos",
+    "159 - Subvencionabilidad del recinto condicionada por incendio",
+    "160 - Contiene Balates",
+    "161 - Frutos secos que no cumplen la densidad mínima, según el nº de árboles registrado",
+    "162 - Visto en campo 2018",
+    "163 - El cambio de uso reflejado en SIGPAC ha sido informado por parte de la Consejería con competencia en medio ambiente como exento de la necesidad de autorización",
+    "164 - El cambio de uso reflejado en SIGPAC ha sido informado por parte de la Consejería con competencia en medio ambiente como autorizado",
+    "165 - El cambio de uso SIGPAC a leñoso, procedente de tierras de cultivo en zona LIC o ZEPA, no acredita autorización administrativa de la Consejería con competencia en medio ambiente",
+    "166 - El cambio de uso reflejado en SIGPAC ha sido informado por parte de la Consejería con competencia en medio ambiente como no autorizado",
+    "167 - Pino inoculado con níscalo",
+    "168 - Pastos leñosos sin mayoría herbácea",
+    "169 - Pino para producción de piñones",
+    "170 - Visto en campo 2019",
+    "171 - Uso SIGPAC estudiado por Control Teledetección 2019",
+    "173 - Actividad agraria comprobada 2016",
+    "174 - Actividad agraria comprobada 2017",
+    "175 - Actividad agraria comprobada 2018",
+    "176 - Actividad agraria comprobada 2019",
+    "177 - Cultivos Permanentes con actividad de mantenimiento 5 años consecutivos",
+    "178 - Monitorización 2019: Pendiente confirmar por renovación Ortofoto",
+    "179 - Recinto con derecho de cultivo en dominio público",
+    "180 - Uso SIGPAC validado por fotointerpretación Control Teledetección 2020",
+    "181 - Uso SIGPAC estudiado por Control Teledetección 2020",
+    "182 - Visto en campo 2020",
+    "183 - Monitorización 2020: Pendiente confirmar por renovación Ortofoto",
+    "184 - cultivo sin suelo",
+    "185 - Actividad agraria comprobada en 2020",
+    "186 - Pasto Permanente con actividad de mantenimiento 5 años consecutivos",
+    "187 - Pendiente control por covid-19",
+    "188 - Uso SIGPAC validado por fotointerpretación Control Teledetección 2021",
+    "189 - Uso SIGPAC estudiado por Control Teledetección 2021",
+    "190 - Visto en campo 2021",
+    "191 - Monitorización 2021: Pendiente confirmar por renovación Ortofoto",
+    "192 - Actividad agraria comprobada en 2021",
+    "193 - Dominio público según catastro",
+    "196 - Visto en campo 2022",
+    "197 - Monitorización 2022: Pendiente confirmar por renovación Ortofoto",
+    "198 - Actividad agraria comprobada en 2022",
+    "199 - Recinto inactivo",
+    "202 - Información de Región en Concentración Parcelaria aportada por la Comunidad Autónoma",
+    "204 - Información Vía Pecuaria aportada por la Comunidad Autónoma",
+    "208 - CSP externo pendiente cambio raster",
+    "209 - Revisado por fotointerpretación por la Comunidad Autónoma",
+    "210 - Recinto afectado por catástrofe natural",
+    "211 - Pasto sin actividad agraria.",
+    "213 - Prado susceptible de siega con altitud <= 300 m",
+    "214 - Prado susceptible de siega con altitud > 300 m",
+    "215 - Elemento del paisaje construcciones tradicionales",
+    "216 - Elemento del paisaje seto hasta 10 m de anchura",
+    "217 - Elemento del paisaje árboles aislados",
+    "218 - Visto en campo 2023",
+    "219 - Monitorización 2023: Pendiente confirmar por renovación Ortofoto",
+    "220 - Actividad agraria comprobada en 2023",
+    "221 - Tierra de cultivo explotada de regadío en alguno de los últimos 3 años",
+    "222 - Elemento del paisaje muro de piedra",
+    "223 - Cabecera de cultivo permanente",
+    "224 - Cultivo leñoso con bancales",
+    "225 - Recinto con CSP bloqueado tras incendio",
+    "226 - Cultivo de setas o champiñón",
+    "227 - Prado susceptible de siega",
+    "228 - Visto en campo 2024",
+    "229 - Monitorización 2024: Pendiente confirmar por renovación Ortofoto",
+    "230 - Actividad agraria comprobada en 2024",
+    "231 - Disponibilidad No acreditada",
+    "233 - Visto en campo 2025",
+    "234 - Monitorización 2025: Pendiente confirmar por renovación Ortofoto",
+    "235 - Actividad agraria comprobada en 2025",
+    "236 - Recinto LDG estable",
+    "237 - Visto en campo 2026",
+    "238 - Monitorización 2026: Pendiente confirmar por renovación Ortofoto",
+    "239 - Actividad agraria comprobada en 2026"
+];
+
+// Funciones para gestionar los desplegables
+function poblarLista(tipo, filtroRegex = null) {
+    let idContenedor, listaMaestra;
+    if (tipo === 'usos') {
+        idContenedor = 'listaUsos';
+        listaMaestra = listaMaestraUsos;
+    } else if (tipo === 'regadio') {
+        idContenedor = 'listaRegadio';
+        listaMaestra = listaMaestraRegadio;
+    } else {
+        idContenedor = 'listaIncidencias';
+        listaMaestra = listaMaestraIncidencias;
+    }
+
+    const contenedor = document.getElementById(idContenedor);
+    contenedor.innerHTML = "";
+    
+    let regex = null;
+    if (filtroRegex) {
+        try {
+            regex = new RegExp(filtroRegex, "i");
+        } catch (e) {
+            regex = null;
+        }
+    }
+
+    listaMaestra.forEach(item => {
+        if (!regex || regex.test(item)) {
+            let div = document.createElement("div");
+            div.className = "item-lista";
+            div.textContent = item;
+            div.onclick = function() {
+                seleccionarItem(tipo, item);
+            };
+            contenedor.appendChild(div);
+        }
+    });
+}
+
+function toggleModal(idModal, event) {
+    event.stopPropagation();
+    document.querySelectorAll('.modal-desplegable').forEach(m => {
+        if (m.id !== idModal) m.style.display = 'none';
+    });
+
+    let modal = document.getElementById(idModal);
+    let tipo = idModal === 'modalUsos' ? 'usos' : (idModal === 'modalRegadio' ? 'regadio' : 'incidencias');
+    
+    if (modal.style.display === "flex") {
+        modal.style.display = "none";
+    } else {
+        modal.style.display = "flex";
+        poblarLista(tipo);
+        let inputBusqueda = modal.querySelector('input[type="text"]');
+        if (inputBusqueda) inputBusqueda.focus();
+    }
+}
+
+function filtrarLista(tipo) {
+    let textoFiltro = document.getElementById("busquedaRegexUsos").value;
+    poblarLista(tipo, textoFiltro);
+}
+
+function seleccionarItem(tipo, textoSeleccionado) {
+    if (tipo === 'usos') {
+        let input = document.getElementById("inputUsoObs");
+        let actual = input.value.trim();
+        if (actual !== "") {
+            input.value = actual + ", " + textoSeleccionado;
+        } else {
+            input.value = textoSeleccionado;
+        }
+        document.getElementById("modalUsos").style.display = "none";
+    } else if (tipo === 'regadio') {
+        let input = document.querySelector('.tabla-campo tr:nth-child(1) td:nth-child(2) input[type="text"]');
+        input.value = textoSeleccionado;
+        document.getElementById("modalRegadio").style.display = "none";
+    } else {
+        let txtArea = document.getElementById("txtIncidencias");
+        let actual = txtArea.value.trim();
+        if (actual !== "") {
+            txtArea.value = actual + ", " + textoSeleccionado;
+        } else {
+            txtArea.value = textoSeleccionado;
+        }
+        document.getElementById("modalIncidencias").style.display = "none";
+    }
+}
+
+window.onclick = function(event) {
+    document.querySelectorAll('.modal-desplegable').forEach(modal => {
+        if (modal.style.display === "flex") {
+            let btnAsociado = modal.previousElementSibling;
+            if (!modal.contains(event.target) && event.target !== btnAsociado) {
+                modal.style.display = "none";
+            }
+        }
+    });
+};
+
 // Registrar proyección ETRS89 UTM Huso 30 (EPSG:25830)
 proj4.defs("EPSG:25830","+proj=utm +zone=30 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
 
@@ -484,11 +837,9 @@ L.tileLayer(
 
 map.setView([39.5, -0.4], 16);
 
-// Capas para dibujo y elementos SIGPAC
 let drawnItems = new L.FeatureGroup();
 map.addLayer(drawnItems);
 
-// 1. Herramientas de Dibujo (Crear elementos)
 let drawControl = new L.Control.Draw({
     position: 'topleft',
     draw: {
@@ -503,7 +854,6 @@ let drawControl = new L.Control.Draw({
 });
 map.addControl(drawControl);
 
-// 2. Panel de Estilo (Color y Transparencia)
 L.EstiloControl = L.Control.extend({
     options: {
         position: 'topleft'
@@ -533,7 +883,6 @@ L.EstiloControl = L.Control.extend({
 });
 map.addControl(new L.EstiloControl());
 
-// 3. Herramientas de Edición y Borrado
 let editControl = new L.Control.Draw({
     position: 'topleft',
     draw: false,
@@ -657,7 +1006,6 @@ async function buscarSIGPAC(){
     }
 }
 
-// Función para leer y cargar XML extrayendo <PARCELA_AGRICOLA> y <DN_SURFACE>
 function cargarXML(event) {
     let file = event.target.files[0];
     if (!file) return;
@@ -695,7 +1043,7 @@ function cargarXML(event) {
                 }
 
                 if (etiquetaTexto && superficieTexto) {
-                    arrayObservaciones.push(etiquetaTexto + ": " + superficieTexto + " m2");
+                    arrayObservaciones.push(etiquetaTexto + " " + superficieTexto + " m2");
                 } else if (etiquetaTexto) {
                     arrayObservaciones.push(etiquetaTexto + " m2");
                 }
@@ -741,7 +1089,6 @@ function cargarXML(event) {
                 }
             }
 
-            // Rellenar automáticamente los campos de texto solicitados
             document.getElementById("inputUsoObs").value = arrayParcelas.join(", ");
             document.getElementById("txtObservaciones").value = arrayObservaciones.join(", ");
 
@@ -765,6 +1112,8 @@ async function generarPDF(){
     const firmaBox = document.getElementById("firmaBox");
     const textoFirmaOriginal = firmaBox.innerHTML;
     firmaBox.innerHTML = "";
+
+    document.querySelectorAll('.btn-desplegable, .modal-desplegable').forEach(el => el.style.display = 'none');
 
     const toolbars = document.querySelectorAll('.leaflet-draw, .controles-estilo-mapa');
     toolbars.forEach(tb => tb.style.display = 'none');
@@ -806,6 +1155,7 @@ async function generarPDF(){
     } finally {
         firmaBox.innerHTML = textoFirmaOriginal;
 
+        document.querySelectorAll('.btn-desplegable').forEach(el => el.style.display = '');
         toolbars.forEach(tb => tb.style.display = '');
         
         document.getElementById("capturaMapa").style.display = "none";
