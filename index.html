@@ -411,7 +411,7 @@ textarea {
 
                 <table class="tabla-campo">
                     <tr>
-                        <td><span class="label-cell">Uso obs:</span> <input type="text" id="inputUsoObs"></td>
+                        <td><span class="label-cell">Uso obs:</span> <input type="text" id="inputUsoObs" style="width: calc(100% - 60px);"></td>
                         <td><span class="label-cell">Regadío:</span> <input type="text"></td>
                     </tr>
                     <tr>
@@ -695,7 +695,7 @@ function cargarXML(event) {
                 }
 
                 if (etiquetaTexto && superficieTexto) {
-                    arrayObservaciones.push(etiquetaTexto + " " + superficieTexto + " m2");
+                    arrayObservaciones.push(etiquetaTexto + ": " + superficieTexto + " m2");
                 } else if (etiquetaTexto) {
                     arrayObservaciones.push(etiquetaTexto + " m2");
                 }
