@@ -264,19 +264,20 @@ table.tabla-sigpac td span {
     float: right;
 }
 
+/* Áreas de texto ampliadas para evitar reboses y solapamientos */
 textarea {
     width: 100%;
-    height: 36px;
+    height: 50px;
     box-sizing: border-box;
     resize: none;
     font-family: Arial, sans-serif;
     padding: 3px 5px;
-    font-size: 9px;
+    font-size: 8.5px;
     border: 1px solid #000;
     background: #fff;
 }
 
-/* Caja de firma digital ampliada */
+/* Caja de firma digital adaptada */
 .firma-box {
     border: 1px dashed #777;
     height: 78px;
@@ -410,7 +411,7 @@ textarea {
 
                 <table class="tabla-campo">
                     <tr>
-                        <td><span class="label-cell">Uso obs:</span> <input type="text"></td>
+                        <td><span class="label-cell">Uso obs:</span> <input type="text" id="inputUsoObs"></td>
                         <td><span class="label-cell">Regadío:</span> <input type="text"></td>
                     </tr>
                     <tr>
@@ -438,7 +439,7 @@ textarea {
             <div class="columna-control-2">
                 <div>
                     <div class="etiqueta-seccion">Observaciones:</div>
-                    <textarea placeholder="Notas de campo..."></textarea>
+                    <textarea id="txtObservaciones" placeholder="Notas de campo..."></textarea>
                 </div>
                 <div>
                     <div class="etiqueta-seccion">Incidencias:</div>
@@ -502,7 +503,7 @@ let drawControl = new L.Control.Draw({
 });
 map.addControl(drawControl);
 
-// 2. Panel de Estilo (Color y Transparencia) colocado exactamente entre crear y editar
+// 2. Panel de Estilo (Color y Transparencia)
 L.EstiloControl = L.Control.extend({
     options: {
         position: 'topleft'
@@ -542,7 +543,6 @@ let editControl = new L.Control.Draw({
 });
 map.addControl(editControl);
 
-// Variable para almacenar la capa que se quiere modificar mediante el menú
 let capaSeleccionadaEdicion = null;
 
 function configurarEventosCapa(layer) {
@@ -565,7 +565,6 @@ window.aplicarEstiloACapaSeleccionada = function() {
     }
 };
 
-// Evento al crear una nueva geometría
 map.on(L.Draw.Event.CREATED, function (e) {
     let layer = e.layer;
     aplicarEstiloLayer(layer);
@@ -584,14 +583,12 @@ map.on(L.Draw.Event.CREATED, function (e) {
     }, 150);
 });
 
-// Evento al editar geometrías existentes con la barra de herramientas de Leaflet
 map.on(L.Draw.Event.EDITED, function (e) {
     e.layers.eachLayer(function (layer) {
         aplicarEstiloLayer(layer);
     });
 });
 
-// Función auxiliar para aplicar el color y opacidad actuales a cualquier capa
 function aplicarEstiloLayer(layer) {
     let colorSeleccionado = document.getElementById("colorElemento").value;
     let opacidadSeleccionada = parseFloat(document.getElementById("opacidadElemento").value);
@@ -660,7 +657,7 @@ async function buscarSIGPAC(){
     }
 }
 
-// Función para leer y cargar XML aplicando el estilo actual
+// Función para leer y cargar XML extrayendo <PARCELA_AGRICOLA> y <DN_SURFACE>
 function cargarXML(event) {
     let file = event.target.files[0];
     if (!file) return;
@@ -682,10 +679,26 @@ function cargarXML(event) {
             let colorSeleccionado = document.getElementById("colorElemento").value;
             let opacidadSeleccionada = parseFloat(document.getElementById("opacidadElemento").value);
 
+            let arrayParcelas = [];
+            let arrayObservaciones = [];
+
             for (let i = 0; i < lineas.length; i++) {
                 let wktNode = lineas[i].getElementsByTagName("WKT")[0];
                 let parcelaAgricolaNode = lineas[i].getElementsByTagName("PARCELA_AGRICOLA")[0];
-                let etiquetaTexto = parcelaAgricolaNode ? parcelaAgricolaNode.textContent : "";
+                let dnSurfaceNode = lineas[i].getElementsByTagName("DN_SURFACE")[0];
+
+                let etiquetaTexto = parcelaAgricolaNode ? parcelaAgricolaNode.textContent.trim() : "";
+                let superficieTexto = dnSurfaceNode ? dnSurfaceNode.textContent.trim() : "";
+
+                if (etiquetaTexto) {
+                    arrayParcelas.push(etiquetaTexto);
+                }
+
+                if (etiquetaTexto && superficieTexto) {
+                    arrayObservaciones.push(etiquetaTexto + " " + superficieTexto + " m2");
+                } else if (etiquetaTexto) {
+                    arrayObservaciones.push(etiquetaTexto + " m2");
+                }
 
                 if (!wktNode) continue;
                 let wktText = wktNode.textContent;
@@ -715,8 +728,8 @@ function cargarXML(event) {
                         fillOpacity: opacidadSeleccionada 
                     });
                     
-                    if (etiquetaTexto && etiquetaTexto.trim() !== "") {
-                        polygon.bindTooltip(etiquetaTexto.trim(), {
+                    if (etiquetaTexto !== "") {
+                        polygon.bindTooltip(etiquetaTexto, {
                             permanent: true,
                             direction: 'center',
                             className: 'etiqueta-texto-mapa'
@@ -728,11 +741,15 @@ function cargarXML(event) {
                 }
             }
 
+            // Rellenar automáticamente los campos de texto solicitados
+            document.getElementById("inputUsoObs").value = arrayParcelas.join(", ");
+            document.getElementById("txtObservaciones").value = arrayObservaciones.join(", ");
+
             if (drawnItems.getLayers().length > 0) {
                 map.invalidateSize();
                 map.fitBounds(drawnItems.getBounds(), { padding: [20, 20] });
             }
-            alert("XML cargado y convertido correctamente (ETRS89 Huso 30).");
+            alert("XML cargado, geometrías convertidas y campos de texto rellenados correctamente.");
         } catch (err) {
             console.error(err);
             alert("Error al procesar el archivo XML.");
@@ -749,7 +766,6 @@ async function generarPDF(){
     const textoFirmaOriginal = firmaBox.innerHTML;
     firmaBox.innerHTML = "";
 
-    // Ocultar barras de herramientas del mapa para el PDF
     const toolbars = document.querySelectorAll('.leaflet-draw, .controles-estilo-mapa');
     toolbars.forEach(tb => tb.style.display = 'none');
 
