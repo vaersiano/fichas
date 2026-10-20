@@ -407,7 +407,7 @@ textarea {
 <div id="ficha">
     <div class="header-institucional">
         <div class="logo-gva">
-            <img src="gva.png" alt="Generalitat Valenciana">
+            <img src="file:///C:/Users/villena.vic/Downloads/sigpac_fichas/images/gva.png" alt="Generalitat Valenciana">
         </div>
         
         <div class="titulo-principal">
@@ -417,10 +417,10 @@ textarea {
         
         <div class="logos-derecha">
             <div class="logo-vaersa">
-                <img src="vaersa.png" alt="VAERSA">
+                <img src="file:///C:/Users/villena.vic/Downloads/sigpac_fichas/images/vaersa.png" alt="VAERSA">
             </div>
             <div class="logo-sigpac">
-                <img src="sigpac.jpg" alt="SIGPAC">
+                <img src="file:///C:/Users/villena.vic/Downloads/sigpac_fichas/images/sigpac.jpg" alt="SIGPAC">
             </div>
         </div>
     </div>
@@ -1026,6 +1026,54 @@ function cargarXML(event) {
                 return;
             }
 
+            // --- EXTRACCIÓN DE DATOS DE LA PRIMERA LÍNEA DE DECLARACIÓN ---
+            let primeraLinea = lineas[0];
+            
+            let provNode = primeraLinea.getElementsByTagName("PROV")[0];
+            let munCatNode = primeraLinea.getElementsByTagName("MUN_CAT")[0];
+            let agregadoNode = primeraLinea.getElementsByTagName("AGREGADO")[0];
+            let zonaNode = primeraLinea.getElementsByTagName("ZONA")[0];
+            let poligonoNode = primeraLinea.getElementsByTagName("POLIGONO")[0];
+            let parcelaNode = primeraLinea.getElementsByTagName("PARCELA")[0];
+            let recintoNode = primeraLinea.getElementsByTagName("RECINTO")[0];
+            let parcelaAgricolaNode = primeraLinea.getElementsByTagName("PARCELA_AGRICOLA")[0];
+
+            let valProv = provNode ? provNode.textContent.trim() : "";
+            let valMun = munCatNode ? munCatNode.textContent.trim() : "";
+            let valAgregado = agregadoNode ? agregadoNode.textContent.trim() : "0";
+            let valZona = zonaNode ? zonaNode.textContent.trim() : "0";
+            let valPoligono = poligonoNode ? poligonoNode.textContent.trim() : "";
+            let valParcela = parcelaNode ? parcelaNode.textContent.trim() : "";
+            let valRecinto = recintoNode ? recintoNode.textContent.trim() : "";
+            let valUso = parcelaAgricolaNode ? parcelaAgricolaNode.textContent.trim() : "";
+
+            // Volcar a la interfaz
+            document.getElementById("provincia").textContent = valProv;
+            document.getElementById("municipio").textContent = valMun;
+            document.getElementById("agregado").textContent = valAgregado;
+            document.getElementById("zona").textContent = valZona;
+            document.getElementById("poligono").textContent = valPoligono;
+            document.getElementById("parcela").textContent = valParcela;
+            document.getElementById("recinto").textContent = valRecinto;
+            document.getElementById("uso").textContent = valUso;
+
+            // Sincronizar campo de referencia superior por comodidad visual
+            document.getElementById("referencia").value = `${valProv}-${valMun}-${valAgregado}-${valZona}-${valPoligono}-${valParcela}-${valRecinto}`;
+
+            // --- SUMATORIA DE SUPERFICIES (<DN_SURFACE>) DE TODAS LAS LÍNEAS ---
+            let sumaSuperficie = 0;
+            for (let k = 0; k < lineas.length; k++) {
+                let superficieNode = lineas[k].getElementsByTagName("DN_SURFACE")[0];
+                if (superficieNode) {
+                    let num = parseFloat(superficieNode.textContent.trim());
+                    if (!isNaN(num)) {
+                        sumaSuperficie += num;
+                    }
+                }
+            }
+            document.getElementById("superficie").textContent = sumaSuperficie > 0 ? sumaSuperficie.toFixed(4) : "";
+
+            // --- PROCESAMIENTO DE GEOMETRÍAS Y MAPA ---
             drawnItems.clearLayers();
 
             let colorSeleccionado = document.getElementById("colorElemento").value;
@@ -1036,10 +1084,10 @@ function cargarXML(event) {
 
             for (let i = 0; i < lineas.length; i++) {
                 let wktNode = lineas[i].getElementsByTagName("WKT")[0];
-                let parcelaAgricolaNode = lineas[i].getElementsByTagName("PARCELA_AGRICOLA")[0];
+                let parcelaAgriNode = lineas[i].getElementsByTagName("PARCELA_AGRICOLA")[0];
                 let dnSurfaceNode = lineas[i].getElementsByTagName("DN_SURFACE")[0];
 
-                let etiquetaTexto = parcelaAgricolaNode ? parcelaAgricolaNode.textContent.trim() : "";
+                let etiquetaTexto = parcelaAgriNode ? parcelaAgriNode.textContent.trim() : "";
                 let superficieTexto = dnSurfaceNode ? dnSurfaceNode.textContent.trim() : "";
 
                 if (etiquetaTexto) {
@@ -1100,7 +1148,7 @@ function cargarXML(event) {
                 map.invalidateSize();
                 map.fitBounds(drawnItems.getBounds(), { padding: [20, 20] });
             }
-            alert("XML cargado, geometrías convertidas y campos de texto rellenados correctamente.");
+            alert("XML cargado, datos recuperados de la primera línea, superficies sumadas y geometrías convertidas correctamente.");
         } catch (err) {
             console.error(err);
             alert("Error al procesar el archivo XML.");
@@ -1111,7 +1159,16 @@ function cargarXML(event) {
 }
 
 async function generarPDF(){
-    const referencia = document.getElementById("referencia").value.trim() || "Ficha_SIGPAC";
+    // Obtener los datos actuales de la ficha para componer el nombre del PDF solicitado
+    const prov = document.getElementById("provincia").textContent.trim() || "PROV";
+    const mun = document.getElementById("municipio").textContent.trim() || "MUN";
+    const agregado = document.getElementById("agregado").textContent.trim() || "0";
+    const zona = document.getElementById("zona").textContent.trim() || "0";
+    const poligono = document.getElementById("poligono").textContent.trim() || "POL";
+    const parcela = document.getElementById("parcela").textContent.trim() || "PAR";
+    const recinto = document.getElementById("recinto").textContent.trim() || "REC";
+
+    const nombreArchivoPDF = `${prov}-${mun}-${agregado}-${zona}-${poligono}-${parcela}-${recinto}`;
     
     const firmaBox = document.getElementById("firmaBox");
     const textoFirmaOriginal = firmaBox.innerHTML;
@@ -1144,7 +1201,7 @@ async function generarPDF(){
 
         const elementoFicha = document.getElementById("ficha");
         const opcionesPDF = {
-            filename: referencia + ".pdf",
+            filename: nombreArchivoPDF + ".pdf",
             margin: 0,
             image: { type: 'jpeg', quality: 1.0 },
             html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 },
