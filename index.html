@@ -407,7 +407,7 @@ textarea {
 <div id="ficha">
     <div class="header-institucional">
         <div class="logo-gva">
-            <img src="file:///C:/Users/villena.vic/Downloads/sigpac_fichas/images/gva.png" alt="Generalitat Valenciana">
+            <img src="gva.png" alt="Generalitat Valenciana">
         </div>
         
         <div class="titulo-principal">
@@ -417,10 +417,10 @@ textarea {
         
         <div class="logos-derecha">
             <div class="logo-vaersa">
-                <img src="file:///C:/Users/villena.vic/Downloads/sigpac_fichas/images/vaersa.png" alt="VAERSA">
+                <img src="vaersa.png" alt="VAERSA">
             </div>
             <div class="logo-sigpac">
-                <img src="file:///C:/Users/villena.vic/Downloads/sigpac_fichas/images/sigpac.jpg" alt="SIGPAC">
+                <img src="sigpac.jpg" alt="SIGPAC">
             </div>
         </div>
     </div>
@@ -1060,7 +1060,7 @@ function cargarXML(event) {
             // Sincronizar campo de referencia superior por comodidad visual
             document.getElementById("referencia").value = `${valProv}-${valMun}-${valAgregado}-${valZona}-${valPoligono}-${valParcela}-${valRecinto}`;
 
-            // --- SUMATORIA DE SUPERFICIES (<DN_SURFACE>) DE TODAS LAS LÍNEAS ---
+            // --- SUMATORIA DE SUPERFICIES (<DN_SURFACE>) DE TODAS LAS LÍNEAS (dividido entre 10000 para hectáreas) ---
             let sumaSuperficie = 0;
             for (let k = 0; k < lineas.length; k++) {
                 let superficieNode = lineas[k].getElementsByTagName("DN_SURFACE")[0];
@@ -1071,7 +1071,7 @@ function cargarXML(event) {
                     }
                 }
             }
-            document.getElementById("superficie").textContent = sumaSuperficie > 0 ? sumaSuperficie.toFixed(4) : "";
+            document.getElementById("superficie").textContent = sumaSuperficie > 0 ? (sumaSuperficie / 10000).toFixed(4) : "";
 
             // --- PROCESAMIENTO DE GEOMETRÍAS Y MAPA ---
             drawnItems.clearLayers();
@@ -1148,7 +1148,7 @@ function cargarXML(event) {
                 map.invalidateSize();
                 map.fitBounds(drawnItems.getBounds(), { padding: [20, 20] });
             }
-            alert("XML cargado, datos recuperados de la primera línea, superficies sumadas y geometrías convertidas correctamente.");
+            alert("XML cargado, datos recuperados de la primera línea, superficies sumadas/convertidas y geometrías convertidas correctamente.");
         } catch (err) {
             console.error(err);
             alert("Error al procesar el archivo XML.");
@@ -1159,7 +1159,6 @@ function cargarXML(event) {
 }
 
 async function generarPDF(){
-    // Obtener los datos actuales de la ficha para componer el nombre del PDF solicitado
     const prov = document.getElementById("provincia").textContent.trim() || "PROV";
     const mun = document.getElementById("municipio").textContent.trim() || "MUN";
     const agregado = document.getElementById("agregado").textContent.trim() || "0";
