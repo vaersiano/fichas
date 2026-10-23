@@ -390,16 +390,42 @@ textarea {
 .item-lista:hover {
     background: #e9ecef;
 }
+
+/* Indicador flotante de lotes en pantalla */
+#indicadorLotes {
+    display: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #333;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: bold;
+    z-index: 9999;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
 </style>
 </head>
 
 <body>
+
+<div id="indicadorLotes">PROCESANDO LOTES...</div>
 
 <div class="panel">
     <input id="referencia" type="text" placeholder="ej. 46-222-0-0-1-1-1" style="padding: 5px; width: 170px;">
     <button onclick="buscarSIGPAC()" style="padding: 6px 10px;">Buscar</button>
     <label style="padding: 6px 10px; background: #6c757d; color: white; cursor: pointer; border-radius: 4px; font-size: 13px;">
         Cargar XML <input type="file" id="cargarXMLInput" accept=".xml" style="display: none;" onchange="cargarXML(event)">
+    </label>
+    <!-- Botón Cargar KML -->
+    <label style="padding: 6px 10px; background: #007bff; color: white; cursor: pointer; border-radius: 4px; font-size: 13px; font-weight: bold;">
+        Cargar KML <input type="file" id="cargarKMLInput" accept=".kml,.xml" style="display: none;" onchange="cargarKML(event)">
+    </label>
+    <!-- Botón LOTES -->
+    <label style="padding: 6px 10px; background: #dc3545; color: white; cursor: pointer; border-radius: 4px; font-size: 13px; font-weight: bold;">
+        LOTES <input type="file" id="cargarLotesInput" accept=".txt,.csv" style="display: none;" onchange="procesarLotes(event)">
     </label>
     <button onclick="generarPDF()" style="padding: 6px 10px; background: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px; margin-left: auto;">Generar PDF</button>
 </div>
@@ -464,7 +490,7 @@ textarea {
                     </div>
                     <div>
                         <b>Controlador:</b><br>
-                        <input type="text" placeholder="Nombre">
+                        <input type="text" id="inputControlador" placeholder="">
                     </div>
                 </div>
 
@@ -500,16 +526,16 @@ textarea {
                         <td colspan="2" style="background:#eaeaea; font-weight:bold; text-align:center; font-size:8px;">Conteo de Cultivos</td>
                     </tr>
                     <tr>
-                        <td><span class="label-cell">Almendro:</span> <input type="text" placeholder="0"></td>
-                        <td><span class="label-cell">Avellano:</span> <input type="text" placeholder="0"></td>
+                        <td><span class="label-cell">Almendro:</span> <input type="text" id="inputAlmendro" placeholder=""></td>
+                        <td><span class="label-cell">Avellano:</span> <input type="text" id="inputAvellano" placeholder=""></td>
                     </tr>
                     <tr>
-                        <td><span class="label-cell">Algarrobo:</span> <input type="text" placeholder="0"></td>
-                        <td><span class="label-cell">Nogal:</span> <input type="text" placeholder="0"></td>
+                        <td><span class="label-cell">Algarrobo:</span> <input type="text" id="inputAlgarrobo" placeholder=""></td>
+                        <td><span class="label-cell">Nogal:</span> <input type="text" id="inputNogal" placeholder=""></td>
                     </tr>
                     <tr>
-                        <td><span class="label-cell">Pistacho:</span> <input type="text" placeholder="0"></td>
-                        <td><span class="label-cell">Otros:</span> <input type="text" placeholder="0"></td>
+                        <td><span class="label-cell">Pistacho:</span> <input type="text" id="inputPistacho" placeholder=""></td>
+                        <td><span class="label-cell">Otros:</span> <input type="text" id="inputOtros" placeholder=""></td>
                     </tr>
                 </table>
             </div>
@@ -517,14 +543,14 @@ textarea {
             <div class="columna-control-2">
                 <div>
                     <div class="etiqueta-seccion">Observaciones:</div>
-                    <textarea id="txtObservaciones" placeholder="Notas de campo..."></textarea>
+                    <textarea id="txtObservaciones" placeholder=""></textarea>
                 </div>
                 <div style="position: relative;">
                     <div class="etiqueta-seccion">
                         Incidencias:
                         <button type="button" class="btn-desplegable" onclick="toggleModal('modalIncidencias', event)">+ Incidencias</button>
                     </div>
-                    <textarea id="txtIncidencias" placeholder="Incidencias detectadas..."></textarea>
+                    <textarea id="txtIncidencias" placeholder=""></textarea>
                     
                     <!-- Desplegable de Incidencias con Búsqueda REGEX -->
                     <div id="modalIncidencias" class="modal-desplegable" style="width: 280px;">
@@ -589,7 +615,7 @@ const listaMaestraIncidencias = [
     "39 - La superficie de cítricos no ocupa la totalidad del recinto por asociación con otros frutales",
     "46 - Recinto de uso no arable perteneciente a parcela incluido en fichero de parcelas declaradas",
     "47 - Se observa en la ortofoto superficie arada",
-    "49 - Árboles aislados o a marco en cultivo combinado con el uso arable",
+    "49 - Arboles aislados o a marco en cultivo combinado con el uso arable",
     "58 - Viña según Registro Vitícola en parte del Recinto SIGPAC",
     "62 - Uso pastos en parcela incluida en base de datos de pasto permanente",
     "63 - Uso diferente a pastos en parcela incluida en base de datos de pasto permanente",
@@ -619,8 +645,8 @@ const listaMaestraIncidencias = [
     "134 - Elemento del paisaje árboles en hilera",
     "135 - Elemento del paisaje árboles en grupo hasta 0,3 ha",
     "136 - Elemento del paisaje linde hasta 10 m de anchura",
-    "137 - Elemento del paisaje charcas, lagunas, pequeños humedales, etc. hasta 0,1 ha",
-    "138 - Elemento del paisaje islas de vegetación natural o roca hasta 0,1 ha",
+    "137 - Elemento del paisaje charcas, lagunas, pequeños humedales, etc. hasta 0,1ha",
+    "138 - Elemento del paisaje islas de vegetación natural o roca hasta 0,1ha",
     "139 - Elemento del paisaje terraza hasta 10 m de anchura",
     "140 - Información del coeficiente de subvencionabilidad aportada por la Comunidad Autónoma",
     "142 - Cultivo de esparrago",
@@ -649,7 +675,7 @@ const listaMaestraIncidencias = [
     "166 - El cambio de uso reflejado en SIGPAC ha sido informado por parte de la Consejería con competencia en medio ambiente como no autorizado",
     "167 - Pino inoculado con níscalo",
     "168 - Pastos leñosos sin mayoría herbácea",
-    "169 - Pino para producción de piñones",
+    "169 - Pino para production de piñones",
     "170 - Visto en campo 2019",
     "171 - Uso SIGPAC estudiado por Control Teledetección 2019",
     "173 - Actividad agraria comprobada 2016",
@@ -867,7 +893,7 @@ L.EstiloControl = L.Control.extend({
         container.innerHTML = `
             <div class="item-control">
                 <span>Color:</span>
-                <input type="color" id="colorElemento" value="#ff7800" title="Color de elementos">
+                <input type="color" id="colorElemento" value="#007bff" title="Color de elementos">
             </div>
             <div class="item-control">
                 <span>Transp:</span>
@@ -878,6 +904,17 @@ L.EstiloControl = L.Control.extend({
                     <option value="0.5">50%</option>
                     <option value="0.7">70%</option>
                     <option value="1.0">100%</option>
+                </select>
+            </div>
+            <div class="item-control">
+                <span>Radio Ptos:</span>
+                <select id="radioPunto" title="Tamaño del círculo para puntos">
+                    <option value="3">3 px (Pequeño)</option>
+                    <option value="4">4 px</option>
+                    <option value="6" selected>6 px (Óptimo)</option>
+                    <option value="8">8 px</option>
+                    <option value="10">10 px</option>
+                    <option value="14">14 px (Grande)</option>
                 </select>
             </div>
         `;
@@ -945,20 +982,31 @@ map.on(L.Draw.Event.EDITED, function (e) {
 function aplicarEstiloLayer(layer) {
     let colorSeleccionado = document.getElementById("colorElemento").value;
     let opacidadSeleccionada = parseFloat(document.getElementById("opacidadElemento").value);
+    let radioSeleccionado = parseInt(document.getElementById("radioPunto").value) || 6;
 
-    if (layer instanceof L.Path) {
+    if (layer instanceof L.Path && !(layer instanceof L.CircleMarker)) {
         layer.setStyle({
             color: colorSeleccionado,
             fillColor: colorSeleccionado,
             fillOpacity: opacidadSeleccionada,
             weight: 3
         });
+    } else if (layer instanceof L.CircleMarker) {
+        layer.setStyle({
+            color: '#ffffff',
+            weight: 1.5,
+            fillColor: colorSeleccionado,
+            fillOpacity: opacidadSeleccionada > 0 ? 0.9 : 0.2,
+            radius: radioSeleccionado
+        });
     } else if (layer instanceof L.Marker) {
+        let diametro = radioSeleccionado * 2;
+        let radioAnchor = radioSeleccionado;
         let customIcon = L.divIcon({
             className: 'custom-marker',
-            html: `<div style="background-color: ${colorSeleccionado}; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 3px rgba(0,0,0,0.5);"></div>`,
-            iconSize: [16, 16],
-            iconAnchor: [8, 8]
+            html: `<div style="background-color: ${colorSeleccionado}; width: ${diametro}px; height: ${diametro}px; border-radius: 50%; border: 1.5px solid white; box-shadow: 0 0 3px rgba(0,0,0,0.5);"></div>`,
+            iconSize: [diametro, diametro],
+            iconAnchor: [radioAnchor, radioAnchor]
         });
         layer.setIcon(customIcon);
     }
@@ -1026,9 +1074,7 @@ function cargarXML(event) {
                 return;
             }
 
-            // --- EXTRACCIÓN DE DATOS DE LA PRIMERA LÍNEA DE DECLARACIÓN ---
             let primeraLinea = lineas[0];
-            
             let provNode = primeraLinea.getElementsByTagName("PROV")[0];
             let munCatNode = primeraLinea.getElementsByTagName("MUN_CAT")[0];
             let agregadoNode = primeraLinea.getElementsByTagName("AGREGADO")[0];
@@ -1047,7 +1093,6 @@ function cargarXML(event) {
             let valRecinto = recintoNode ? recintoNode.textContent.trim() : "";
             let valUso = parcelaAgricolaNode ? parcelaAgricolaNode.textContent.trim() : "";
 
-            // Volcar a la interfaz
             document.getElementById("provincia").textContent = valProv;
             document.getElementById("municipio").textContent = valMun;
             document.getElementById("agregado").textContent = valAgregado;
@@ -1057,10 +1102,8 @@ function cargarXML(event) {
             document.getElementById("recinto").textContent = valRecinto;
             document.getElementById("uso").textContent = valUso;
 
-            // Sincronizar campo de referencia superior por comodidad visual
             document.getElementById("referencia").value = `${valProv}-${valMun}-${valAgregado}-${valZona}-${valPoligono}-${valParcela}-${valRecinto}`;
 
-            // --- SUMATORIA DE SUPERFICIES (<DN_SURFACE>) DE TODAS LAS LÍNEAS (dividido entre 10000 para hectáreas) ---
             let sumaSuperficie = 0;
             for (let k = 0; k < lineas.length; k++) {
                 let superficieNode = lineas[k].getElementsByTagName("DN_SURFACE")[0];
@@ -1073,7 +1116,6 @@ function cargarXML(event) {
             }
             document.getElementById("superficie").textContent = sumaSuperficie > 0 ? (sumaSuperficie / 10000).toFixed(4) : "";
 
-            // --- PROCESAMIENTO DE GEOMETRÍAS Y MAPA ---
             drawnItems.clearLayers();
 
             let colorSeleccionado = document.getElementById("colorElemento").value;
@@ -1141,7 +1183,6 @@ function cargarXML(event) {
                 }
             }
 
-            document.getElementById("inputUsoObs").value = arrayParcelas.join(", ");
             document.getElementById("txtObservaciones").value = arrayObservaciones.join(", ");
 
             if (drawnItems.getLayers().length > 0) {
@@ -1156,6 +1197,286 @@ function cargarXML(event) {
     };
     reader.readAsText(file);
     event.target.value = "";
+}
+
+function cargarKML(event) {
+    let file = event.target.files[0];
+    if (!file) return;
+
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            let parser = new DOMParser();
+            let kmlDoc = parser.parseFromString(e.target.result, "text/xml");
+
+            // Asegurar color azul por defecto al cargar KML si no se ha cambiado
+            document.getElementById("colorElemento").value = "#007bff";
+            let colorSeleccionado = "#007bff";
+            let opacidadSeleccionada = parseFloat(document.getElementById("opacidadElemento").value);
+            let radioSeleccionado = parseInt(document.getElementById("radioPunto").value) || 6;
+
+            let elementosCargados = 0;
+
+            let placemarks = kmlDoc.getElementsByTagName("Placemark");
+            for (let i = 0; i < placemarks.length; i++) {
+                // Procesar puntos (<Point>)
+                let pointNode = placemarks[i].getElementsByTagName("Point")[0];
+                if (pointNode) {
+                    let coordNode = pointNode.getElementsByTagName("coordinates")[0];
+                    if (coordNode) {
+                        let coordsText = coordNode.textContent.trim();
+                        let partes = coordsText.split(",");
+                        if (partes.length >= 2) {
+                            let lon = parseFloat(partes[0]);
+                            let lat = parseFloat(partes[1]);
+
+                            if (!isNaN(lat) && !isNaN(lon)) {
+                                let diametro = radioSeleccionado * 2;
+                                let radioAnchor = radioSeleccionado;
+                                let customIcon = L.divIcon({
+                                    className: 'custom-marker',
+                                    html: `<div style="background-color: ${colorSeleccionado}; width: ${diametro}px; height: ${diametro}px; border-radius: 50%; border: 1.5px solid white; box-shadow: 0 0 3px rgba(0,0,0,0.5);"></div>`,
+                                    iconSize: [diametro, diametro],
+                                    iconAnchor: [radioAnchor, radioAnchor]
+                                });
+
+                                let marker = L.marker([lat, lon], { icon: customIcon });
+                                configurarEventosCapa(marker);
+                                drawnItems.addLayer(marker);
+                                elementosCargados++;
+                            }
+                        }
+                    }
+                }
+
+                // Procesar polígonos (<Polygon>)
+                let polygonNode = placemarks[i].getElementsByTagName("Polygon")[0];
+                if (polygonNode) {
+                    let coordNode = polygonNode.getElementsByTagName("coordinates")[0];
+                    if (coordNode) {
+                        let coordsText = coordNode.textContent.trim();
+                        let pares = coordsText.split(/\s+/);
+                        let latLngs = [];
+                        for (let p = 0; p < pares.length; p++) {
+                            let vals = pares[p].split(",");
+                            if (vals.length >= 2) {
+                                let lon = parseFloat(vals[0]);
+                                let lat = parseFloat(vals[1]);
+                                if (!isNaN(lat) && !isNaN(lon)) {
+                                    latLngs.push([lat, lon]);
+                                }
+                            }
+                        }
+                        if (latLngs.length > 0) {
+                            let poly = L.polygon(latLngs, {
+                                color: colorSeleccionado,
+                                fillColor: colorSeleccionado,
+                                fillOpacity: opacidadSeleccionada,
+                                weight: 3
+                            });
+                            configurarEventosCapa(poly);
+                            drawnItems.addLayer(poly);
+                            elementosCargados++;
+                        }
+                    }
+                }
+
+                // Procesar líneas (<LineString>)
+                let lineNode = placemarks[i].getElementsByTagName("LineString")[0];
+                if (lineNode) {
+                    let coordNode = lineNode.getElementsByTagName("coordinates")[0];
+                    if (coordNode) {
+                        let coordsText = coordNode.textContent.trim();
+                        let pares = coordsText.split(/\s+/);
+                        let latLngs = [];
+                        for (let p = 0; p < pares.length; p++) {
+                            let vals = pares[p].split(",");
+                            if (vals.length >= 2) {
+                                let lon = parseFloat(vals[0]);
+                                let lat = parseFloat(vals[1]);
+                                if (!isNaN(lat) && !isNaN(lon)) {
+                                    latLngs.push([lat, lon]);
+                                }
+                            }
+                        }
+                        if (latLngs.length > 0) {
+                            let line = L.polyline(latLngs, {
+                                color: colorSeleccionado,
+                                weight: 3
+                            });
+                            configurarEventosCapa(line);
+                            drawnItems.addLayer(line);
+                            elementosCargados++;
+                        }
+                    }
+                }
+            }
+
+            if (elementosCargados > 0) {
+                map.invalidateSize();
+                map.fitBounds(drawnItems.getBounds(), { padding: [20, 20] });
+                alert(`KML cargado con éxito. Se incorporaron ${elementosCargados} elementos al plano listos para ser editados y modificados.`);
+            } else {
+                alert("No se pudieron extraer geometrías válidas del archivo KML.");
+            }
+
+        } catch (err) {
+            console.error("Error al procesar el archivo KML:", err);
+            alert("Error al parsear el archivo KML.");
+        }
+    };
+
+    reader.readAsText(file);
+    event.target.value = "";
+}
+
+async function buscarSIGPACPorReferencia(referencia){
+    const p = referencia.split("-");
+    if(p.length !== 7) throw new Error("Formato inválido");
+
+    document.getElementById("provincia").textContent = p[0];
+    document.getElementById("municipio").textContent = p[1];
+    document.getElementById("agregado").textContent = p[2];
+    document.getElementById("zona").textContent = p[3];
+    document.getElementById("poligono").textContent = p[4];
+    document.getElementById("parcela").textContent = p[5];
+    document.getElementById("recinto").textContent = p[6];
+
+    document.getElementById("inputControlador").value = "";
+    document.getElementById("inputUsoObs").value = "";
+    document.getElementById("inputAlmendro").value = "";
+    document.getElementById("inputAvellano").value = "";
+    document.getElementById("inputAlgarrobo").value = "";
+    document.getElementById("inputNogal").value = "";
+    document.getElementById("inputPistacho").value = "";
+    document.getElementById("inputOtros").value = "";
+    document.getElementById("txtObservaciones").value = "";
+    document.getElementById("txtIncidencias").value = "";
+
+    const url = `https://sigpac-hubcloud.es/servicioconsultassigpac/query/recinfo/${p[0]}/${p[1]}/${p[2]}/${p[3]}/${p[4]}/${p[5]}/${p[6]}.geojson`;
+
+    const response = await fetch(url);
+    if(!response.ok) throw new Error("Error en servicio SIGPAC");
+    const geojson = await response.json();
+
+    if(recintoLayer){ map.removeLayer(recintoLayer); }
+
+    recintoLayer = L.geoJSON(geojson, {
+        color: "red",
+        weight: 3,
+        fillColor: "red",
+        fillOpacity: 0.15
+    }).addTo(map);
+
+    map.invalidateSize();
+    map.fitBounds(recintoLayer.getBounds(), { padding: [20, 20] });
+
+    const props = geojson.features?.[0]?.properties || {};
+    document.getElementById("uso").textContent = props.uso_sigpac || props.uso || "";
+    document.getElementById("superficie").textContent = props.superficie !== undefined ? props.superficie : "";
+    document.getElementById("coefreg").textContent = props.coef_regadio !== undefined ? props.coef_regadio : (props.coefreg || "0");
+}
+
+async function procesarLotes(event) {
+    let file = event.target.files[0];
+    if (!file) return;
+
+    let reader = new FileReader();
+    reader.onload = async function(e) {
+        let contenido = e.target.result;
+        let lineas = contenido.split(/\r\n|\n/).map(l => l.trim()).filter(l => l !== "");
+
+        if (lineas.length === 0) {
+            alert("El archivo de lotes está vacío.");
+            event.target.value = "";
+            return;
+        }
+
+        let indicador = document.getElementById("indicadorLotes");
+        indicador.style.display = "block";
+
+        let total = lineas.length;
+        let exitos = 0;
+        let errores = 0;
+        let detalleErrores = [];
+
+        for (let i = 0; i < total; i++) {
+            let ref = lineas[i];
+            indicador.textContent = `PROCESANDO ${i + 1}/${total} (${ref})`;
+
+            try {
+                await buscarSIGPACPorReferencia(ref);
+                await new Promise(r => setTimeout(r, 600));
+
+                await ejecutarGenerarPDFPorLotes(ref);
+                exitos++;
+            } catch (err) {
+                console.error(`Error procesando referencia ${ref}:`, err);
+                errores++;
+                detalleErrores.push(`${ref}: ${err.message}`);
+            }
+        }
+
+        indicador.style.display = "none";
+        event.target.value = "";
+
+        let mensajeFinal = `Procesamiento por lotes finalizado.\n\n- Éxitos (PDFs generados): ${exitos}\n- Errores: ${errores}`;
+        if (errores > 0) {
+            mensajeFinal += `\n\nDetalle de errores:\n` + detalleErrores.join("\n");
+        }
+        alert(mensajeFinal);
+    };
+    reader.readAsText(file);
+}
+
+async function ejecutarGenerarPDFPorLotes(nombrePersonalizado){
+    const firmaBox = document.getElementById("firmaBox");
+    const textoFirmaOriginal = firmaBox.innerHTML;
+    firmaBox.innerHTML = "";
+
+    document.querySelectorAll('.btn-desplegable, .modal-desplegable').forEach(el => el.style.display = 'none');
+    const toolbars = document.querySelectorAll('.leaflet-draw, .controles-estilo-mapa');
+    toolbars.forEach(tb => tb.style.display = 'none');
+
+    await new Promise(r => setTimeout(r, 800));
+
+    try {
+        const mapaDiv = document.getElementById("mapPreview");
+        const captura = document.getElementById("capturaMapa");
+
+        map.invalidateSize();
+
+        const canvas = await html2canvas(mapaDiv, {
+            useCORS: true,
+            backgroundColor: "#ffffff",
+            scale: 2,
+            logging: false,
+            allowTaint: false
+        });
+
+        captura.src = canvas.toDataURL("image/png");
+        mapaDiv.style.display = "none";
+        captura.style.display = "block";
+
+        const elementoFicha = document.getElementById("ficha");
+        const opcionesPDF = {
+            filename: nombrePersonalizado + ".pdf",
+            margin: 0,
+            image: { type: 'jpeg', quality: 1.0 },
+            html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 },
+            jsPDF: { unit: 'px', format: [1123, 794], orientation: 'landscape', putOnlyUsedFonts: true }
+        };
+
+        await html2pdf().set(opcionesPDF).from(elementoFicha).save();
+
+    } finally {
+        firmaBox.innerHTML = textoFirmaOriginal;
+        document.querySelectorAll('.btn-desplegable').forEach(el => el.style.display = '');
+        toolbars.forEach(tb => tb.style.display = '');
+        document.getElementById("capturaMapa").style.display = "none";
+        document.getElementById("mapPreview").style.display = "block";
+        map.invalidateSize();
+    }
 }
 
 async function generarPDF(){
